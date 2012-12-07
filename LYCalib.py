@@ -165,7 +165,8 @@ class PedestalFinder:
 			#if ((self.numFoundPeaks == 2) and (self.gain < 30)):
 			if ((self.gain < 50) and (self.numFoundPeaks > 1) and (self.peakPositions[0] > 1)):
 				lowerBin = self.channel.adcHist.FindBin(self.peakPositions[1]) - (self.gain/2.0)
-				upperBin = self.channel.adcHist.GetNbinsX()
+				upperBin = self.channel.adcHist.FindBin(self.peakPositions[1]) + (self.gain/2.0)
+				#upperBin = self.channel.adcHist.GetNbinsX()
 				darkCount = self.channel.adcHist.Integral(lowerBin,upperBin)
 				darkCountRatio = darkCount/( self.channel.adcHist.Integral(0,self.channel.adcHist.GetNbinsX() ) )
 				self.channel.status = 1
