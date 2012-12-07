@@ -488,13 +488,13 @@ class DATEReader:
 
 		pass
 
-	def readBinary(self, run):
+	def readBinary(self, run, dataFormat="compressed"):
 
 		binaryReader = Binary.BinaryReader()
 		binaryReader.open(self.filename)
 		#binaryReader.readOld(run)	
-		binaryReader.readCompressed(run)
-
+		#binaryReader.readCompressed(run)
+		binaryReader.formats[dataFormat](run)
 	# Read in lines of file to array, break up each individual line into an array
 	# and pass array entries into variables based on known format of file.
 	# Convert variables to ints and add information to run's channels

@@ -51,7 +51,7 @@ class BinaryReader:
 
 	def __init__(self):
 		#self.messageHandler = MessageHandler.MessageHandler()
-		pass
+		self.formats = {"compressed":self.readCompressed, "singleStation":self.read, "cosmic":self.readOld}
 
 	def open(self, file):
 		self.file = open(file,"rb")
