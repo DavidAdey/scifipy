@@ -24,7 +24,7 @@ class PedestalFinder:
 		#self.numPeaks = 5
 		self.gain = 0
 		self.numFoundPeaks = 0
-		self.integrals = []
+		self.integrals = {}
 		self.fitResults = []
 
 	# Load a ChannelRun, which should already have been filled with ADC counts
@@ -47,7 +47,7 @@ class PedestalFinder:
 	# distance between peaks, store as self.gain
 	def findPeaks(self):
 
-		gainGuess = 0
+		gainGuess = 0.0
 		self.numFoundPeaks = self.spectrum.Search(self.channel.adcHist,2,"", 0.0025 ); # 2 = minimum peak sigma, 0.0025  = minimum min:max peak height ratio - see TSpectrum
 		self.peakPositions = []
 		if (self.numFoundPeaks > 0):
@@ -56,16 +56,11 @@ class PedestalFinder:
 				if (positionsTemp[peak] > 1.0):
                                 	self.peakPositions.append(positionsTemp[peak])
 				else:
-					#self.peakPositions.pop(i)
-                                        #print "Didn't add a peak with value less than 1 - electronics error"
-					self.numFoundPeaks -= 1
-                        #del positionsTemp 
-                        self.peakPositions.sort()	
+					self.numFoundPeaks -= 1 
+                        self.peakPositions.sort() # put the peaks in ADC order, not the pulse height order ROOT returns	
 			for i in range(self.numFoundPeaks):
 				if (i > 0):
 					gainGuess += self.peakPositions[i] - self.peakPositions[i-1]
-				if (self.peakPositions[i] <= 1):
-					self.peakPositions.pop(i)	
 			if (self.numFoundPeaks > 1):
 				gainGuess = gainGuess/(self.numFoundPeaks - 1)	
 				self.gain = gainGuess
@@ -130,13 +125,17 @@ class PedestalFinder:
 
 	def getCalculatedGain(self):
 
-		sum = 0.0
-		num = 0.0
-		for peak in range(len(self.fitResults)):
-			if (peak > 0):
-				sum += (self.fitResults[peak].GetParameter(1) - self.fitResults[peak - 1].GetParameter(1))
-				num += 1.0
-		return (sum / num)
+		gain = -1.0
+		if (len(self.fitResults) > 0):
+			gain += 1.0
+			sum = 0.0
+			num = 0.0
+			for peak in range(len(self.fitResults)):
+				if (peak > 0):
+					sum += (self.fitResults[peak].GetParameter(1) - self.fitResults[peak - 1].GetParameter(1))
+					num += 1.0
+			gain += (sum / num)
+		return gain
 
 	# Calculate the integral of the bins one gain around each peak, and then for the whole
 	# histogram above the final peak (with a width of one gain)
@@ -146,10 +145,10 @@ class PedestalFinder:
 		for i in range(self.numFoundPeaks):
 			upperBin = self.channel.adcHist.FindBin(self.peakPositions[i] + (self.gain/2.0))
 			lowerBin = self.channel.adcHist.FindBin(self.peakPositions[i] - (self.gain/2.0)) + 1
-			self.integrals.append(self.channel.adcHist.Integral(lowerBin, upperBin))	
+			self.integrals[i] = (self.channel.adcHist.Integral(lowerBin, upperBin))	
 		if (self.numFoundPeaks > 0):
 			lastUpperBin = self.channel.adcHist.FindBin(self.peakPositions[self.numFoundPeaks - 1] + (self.gain/2.0))
-			self.integrals.append(self.channel.adcHist.Integral(lastUpperBin, self.channel.adcHist.GetNbinsX()))
+			self.integrals[i] = (self.channel.adcHist.Integral(lastUpperBin, self.channel.adcHist.GetNbinsX()))
 
 	def getTotalCounts(self):
 		return ( self.channel.adcHist.Integral(0,self.channel.adcHist.GetNbinsX() ) )	
@@ -184,19 +183,13 @@ class PedestalFinder:
 
 
 	def savePlots(self, canvas):
-
-		self.channel.adcHist.Draw()
-		#canvas.SaveAs(self.channel.name + ".png")
+		self.channel.adcHist.Draw()	
 		self.channel.adcHist.Write()
 
 
-	def getPE(self):
-
-		pe = 0
+	def getPE(self):	
+		pe = 0.0
 		if (self.numFoundPeaks > 1):
-			#cut = int(self.peakPositions[0] + 2.5*(self.gain))
-			#aboveCutADC = self.channel.adcHist.Integral(cut, 255) / (255 - cut)
-			#pe = (aboveCutADC - self.peakPositions[0]) / self.gain
 			pe = (self.channel.adcHist.GetMean() - self.peakPositions[0]) / self.gain
 		if (self.gain > 0.0):
 			return pe
@@ -206,7 +199,6 @@ class PedestalFinder:
 
 
 class LYCalibrator:
-
 	def __init__(self, run):
 		#print "Calibrating those photons"
 		self.run = run
