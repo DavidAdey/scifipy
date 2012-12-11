@@ -18,10 +18,6 @@ numbers = ['one','two','three','four','five','six','seven','eight','nine','ten']
 class PedestalFinder:
 
 	def __init__(self):
-
-		##print "something"
-		#self.canvas = canvas
-		#self.numPeaks = 5
 		self.gain = 0
 		self.numFoundPeaks = 0
 		self.integrals = {}
@@ -30,13 +26,11 @@ class PedestalFinder:
 	# Load a ChannelRun, which should already have been filled with ADC counts
 	# Add a TSpectrum
 	def loadChannel(self, channelRun):
-
 		self.channel = channelRun
 		self.spectrum = ROOT.TSpectrum();
 
 	# Call make histograms function for the channel in this pedestal finder
 	def makeHistograms(self):
-
 		if (self.channel.histoMade == 0):
 			self.channel.makeAdcHistogram()
 			
@@ -46,7 +40,6 @@ class PedestalFinder:
 	# Loop over the peak positions and make a guess at the gain as the average
 	# distance between peaks, store as self.gain
 	def findPeaks(self):
-
 		gainGuess = 0.0
 		self.numFoundPeaks = self.spectrum.Search(self.channel.adcHist,2,"", 0.0025 ); # 2 = minimum peak sigma, 0.0025  = minimum min:max peak height ratio - see TSpectrum
 		self.peakPositions = []
@@ -69,7 +62,6 @@ class PedestalFinder:
 	# taking the average distance between peaks - to replace the same code
 	# implemented in findPeaks()
 	def guessGains(self):
-
 		for i in range(self.numFoundPeaks):
                         if (i > 0):
                         	gainGuess += self.peakPositions[i] - self.peakPositions[i-1]
@@ -80,7 +72,6 @@ class PedestalFinder:
 	# Make a rough fit of the pedestal, assuming it to be the first peaks in self.peakPositions
 	# (largest by TSpectrum) and fit a Gaussian one half gain either side
 	def fitPedestal(self):
-
 		if (self.gain > 0):
 			self.channel.adcHist.Fit("gaus","","",self.peakPositions[0] - (self.gain/2.0),self.peakPositions[0] + (self.gain/2.0) )
 			self.channel.adcHist.Draw()
@@ -89,14 +80,12 @@ class PedestalFinder:
 	
 	# Perform the same as the pedestal peak fit, but for the second found peak
 	def fitSinglesPeak(self):
-
 		if (self.numFoundPeaks > 1):
 			self.channel.adcHist.Fit("gaus","+","",self.peakPositions[1] - (self.gain/2.0),self.peakPositions[1] + (self.gain/2.0) )
                 self.channel.adcHist.Draw()
 
 	# Perform a Gaussian fit of width one gain to all peaks found by the peak finder
 	def fitAllPeaks(self):
-
 		params = ROOT.TArrayD(3*self.numFoundPeaks)
 		if (self.numFoundPeaks > 1 and self.numFoundPeaks < 10):
 			for i in range(self.numFoundPeaks):
@@ -124,7 +113,6 @@ class PedestalFinder:
 		self.channel.adcHist.Draw()
 
 	def getCalculatedGain(self):
-
 		gain = -1.0
 		if (len(self.fitResults) > 0):
 			gain += 1.0
@@ -140,7 +128,6 @@ class PedestalFinder:
 	# Calculate the integral of the bins one gain around each peak, and then for the whole
 	# histogram above the final peak (with a width of one gain)
 	def getIntegrals(self):
-
 		self.totalIntegral = self.channel.adcHist.Integral(0,self.channel.adcHist.GetNbinsX())
 		for i in range(self.numFoundPeaks):
 			upperBin = self.channel.adcHist.FindBin(self.peakPositions[i] + (self.gain/2.0))
@@ -153,15 +140,12 @@ class PedestalFinder:
 	def getTotalCounts(self):
 		return ( self.channel.adcHist.Integral(0,self.channel.adcHist.GetNbinsX() ) )	
 
-	def getDarkCount(self, peakLocation = 0):
-
-		peakLocation = 0
+	def getDarkCount(self, peakLocation = 0):	
 		darkCountRatio = 0.0
 		if (peakLocation == 0):
 			if (len(self.fitResults) > 0):
 				peakLocation = self.fitResults[1].GetParameter(0)
-		if (peakLocation == 0):	
-			#if ((self.numFoundPeaks == 2) and (self.gain < 30)):
+		if (peakLocation == 0):		
 			if ((self.gain < 50) and (self.numFoundPeaks > 1) and (self.peakPositions[0] > 1)):
 				lowerBin = self.channel.adcHist.FindBin(self.peakPositions[1]) - (self.gain/2.0)
 				upperBin = self.channel.adcHist.FindBin(self.peakPositions[1]) + (self.gain/2.0)

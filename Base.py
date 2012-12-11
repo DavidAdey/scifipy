@@ -26,9 +26,7 @@ channelsPerTrip = 32
 # in adcValues
 
 class ChannelHit:
-
 	def __init__(self, chan = -1, adc = -1, tdc = -1, discrim = -1, event = -1):
-
 		self.uniqueChan = chan
 		self.adc = adc
 		self.tdc = tdc
@@ -46,28 +44,26 @@ class ChannelRun:
 		self.board = -1 			# VLSB/AFE board ID
 		self.bank = -1 				# Bank ID
 		self.channel = -1 			# Channel number            
-		self.adcValues = []
-		self.adcRange  = adcRange
-		self.tdcValues = []
-		self.discriminators = []
+		self.adcValues = []			# Array of all ADC values, usually ignored for size
+		self.adcRange  = adcRange		# Need to make a global
+		self.tdcValues = []			# Array of all TDC values, usually ignored for size
+		self.discriminators = []		# Array of all discriminator values, usually ignored for size
 		self.histoMade = 0
 		self.status = -1 			# -1 unknown, 0 dead, 1 alive, 2 breakdown
-		self.maxAdc = 0
-		self.size = 0
+		self.maxAdc = 0				# Highest ADC recored in this channel
+		self.size = 0				# Total number of entries
 
-		self.hits = []
+		self.hits = []				# Array of raw data objects - usually ignored
 		self.totalDiscriminatorValues = 0
 		self.totalDiscriminatorFired = 0
             
 
 	# give VLSB, Bank and Channel numbers to class and create a unique channel number
-	def setup(self, boardin, bankin, channelin):
-		
+	def setup(self, boardin, bankin, channelin):		
 		self.board = boardin
 		self.bank = bankin
 		self.channel = channelin
 		self.uniqueChan = self.channel + ( (self.bank)*chansPerBank) + ( (self.board)*chansPerBoard)
-
 
 		# Get Module number from channel number - channel number ranges from 0-127 for 128 channel per DFPGA
 		# Two AFPGAs/MCM/VLPC Modules per DFPGA means 64 channels per module
@@ -78,26 +74,18 @@ class ChannelRun:
                 elif ((self.channel >= channelsPerModule) and (self.channel < chansPerBank)):
                 	self.module = (self.bank * modulesPerBank) + 1
 			self.trip = int((self.channel - channelsPerModule)/channelsPerTrip)
-                else:
-                	#print "Channel Number out of Range"
+                else:	
 			self.module = -1
 	
-		##print "Trip is " + str(self.trip)
-
-
-
 	# add an ADC value to the array
-	def addAdcValue(self, value):
-            
+	def addAdcValue(self, value):    
 		self.adcHist.Fill(value)
 		self.size += 1
 		if (value > self.maxAdc):
 			self.maxAdc = value # Reset the highest ADC value recoded in this run
             
-
 	# add a TDC value to the array
         def addTdcValue(self, value):
-
                 if (self.storeAll):
 			self.tdcValues.append(value)
 		self.tdcHist.Fill(value)
@@ -111,12 +99,10 @@ class ChannelRun:
 
 
 	def addHit(self, channel, adc, tdc, discrim, event):
-
 		hit = ChannelHit(self.uniqueChan, adc, tdc, discrim, event)
 		self.hits.append(hit)
 
 	def getDiscriminatorRatio(self):
-	
 		if (self.totalDiscriminatorValues > 0):
 			return (self.totalDiscriminatorFired/self.totalDiscriminatorValues)
 		else:
@@ -133,7 +119,6 @@ class ChannelRun:
 		histogramName = "Board: " + str(self.board) + " Bank: " + str(self.bank) + " Channel: " + str(self.channel)
                 histFileName = str(number) + "-" + str(self.board) + "-" + str(self.bank) + "-" + str(self.channel)
                 self.adcHist = ROOT.TH1F(histFileName, histogramName, self.adcRange, 0, self.adcRange)
-
 
 	# Make a histogram of stored ADC values for this channel. Take a canvas, make a histogram
 	# fill with entries of adc array, draw and save to file
@@ -164,8 +149,7 @@ class Run:
 		self.channelRuns = []
 		self.peakFinders = []
 		self.attributes = {}
-		self.channelsMaxed = 0
-		#self.dataObjects = []
+		self.channelsMaxed = 0	
 		self.runNumber = 1#int(fileName[:-4])
 		#self.messageHandler = MessageHandler.MessageHandler()
 
@@ -479,10 +463,7 @@ class DATEReader:
       
 	# Constructor
 	def __init__(self, filename):
-
-		#print filename
 		self.filename = filename            
-            
 
 	def readRootFile(self, run):
 

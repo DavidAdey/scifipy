@@ -6,6 +6,7 @@ import time
 import Base
 import DataBase
 import CalibrationManager
+import Globals
 from subprocess import call
 
 # Overall management class for the autoDAQ and calibration
@@ -22,12 +23,12 @@ class TrackerManager:
 	# call the generate function from the dictionary using the first entry of the settings as the type
 	# then filling the remaining entries of the settings list
 	def generateSettings(self, settings):
-		if not(isinstance(settings[0], str):	
+		if not(isinstance(settings[0], str)):	
 			print "Something wrong with the settings type"
 			raise TypeError
-		for s in range(len(settings - 1):
-			settings = settings[s+1]
-			if not(isinstance(setting, float):
+		for s in range(len(settings) - 1):
+			setting = settings[s+1]
+			if not(isinstance(setting, float)):
 				print "Something wrong with the settings"
 				raise TypeError
 		self.settingsModes[settings[0]](settings) 
@@ -87,7 +88,8 @@ class TrackerManager:
 	def readout(self, runNumber):
 		print "Reading out run" + str(runNumber)
 		bias = self.calibrationRunDescriptions[self.currentRun].getParameters()["bias"]
-		call(["/home/daq/Software/ExtApps/CAENVMElib-2-11/apps/TrDAQ",str(runNumber),str(bias)])
+		#call(["/home/daq/Software/ExtApps/CAENVMElib-2-11/apps/TrDAQ",str(runNumber),str(bias)])
+		call(["/home/adey/MICE/TrackerCalibration/TrackerCalibration/TrackerDAQ/TrDAQ",str(runNumber),str(bias)])
 		self.currentRun += 1
 
 	# Write the run number and settings to the database, getting the current run number

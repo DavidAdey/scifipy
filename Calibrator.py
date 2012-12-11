@@ -1,20 +1,19 @@
-from Helpers import *
+import Helpers
 
 # Base class for calibrator types
 class Calibrator(object):
 
 	def __init__(self):
-		self.processes = ProcessDictionary()
+		self.processes = Helpers.ProcessDictionary()
 		self.globalParameters = {}
 	# Setup - defined in child classes
 	def setup(self):
-		pass
-	# Setup - defined in child classes
-	def loadDataCampaign(self):
-		pass
+		pass 
 	
-	# Add a process (function) to the lis that will be executed by
-	# this calibrator
+	def loadDataCampaign(self):
+		pass # Load - defined in child classes
+	
+	# Add a process (function) to the list that will be executed by this calibrator
 	def addProcess(self, name, process, parameters = None):
 		if (parameters is not None):
 			self.processes[name] = process
@@ -22,14 +21,12 @@ class Calibrator(object):
 		else:
 			self.processes[name] = process
 	
-	# Add a seperate parameter to the global list used
-	# by the processes
+	# Add a seperate parameter to the global list used by the processes
 	def addParameter(self, name, parameter):
 		self.globalParameters[name] = parameter
 
 	# Loop over all processes in the dicionary
-	# execute the process with its arguments,
-	# if they are defined
+	# execute the process with its arguments, if they are defined
 	def runProcesses(self):	
 		for name in self.processes:
 			process = self.processes[name] # this is a function
